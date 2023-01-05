@@ -1,28 +1,43 @@
+
 const {Router} = require('express');
 const fs = require('fs');
 
+
 const router = Router();
 
-const products = [];
+
+let idCount = 0;
+
+const readFile = fs.readFileSync('./src/products.json','utf-8');
+const productsParse = JSON.parse(readFile);
+
+const write = ()=>{
+const productString = JSON.stringify(productsParse,null,2);
+const writeFile = fs.writeFileSync('./src/products.json',productString);
+
+}
+
 
 
 router.get('/', (req,res)=>{
     const limitProduct = req.query.limit;
     if(!limitProduct){
-        return res.send({status:"Success", data:products});
+        return res.send({status:"Success", data:productsParse});
+    
     }else{
-        let filterProductLimit = products.filter((product,indice) => indice < limitProduct)
+        let filterProductLimit = productsParse.filter((product,indice) => indice < limitProduct)
         return res.send({Status:'Success',ProductsFilter:filterProductLimit})
      }
 
 })
+  // metodo get por id
 
 router.get('/:pid',(req,res)=>{
     const productId = req.params.pid;
     if(productId == 0){
         return res.status(400).send({status:"Error",error:'Product not found'})
     }else{
-        const findProductId = products.find(u=>u.id === parseInt(productId))
+        const findProductId = productsParse.find(u=>u.id === parseInt(productId))
         
         return res.send({status:"Success",ProductFound:findProductId})
  
@@ -32,21 +47,28 @@ router.get('/:pid',(req,res)=>{
   // metodo post
   
 router.post('/',(req,res)=>{
-    let user = req.body;
+    let product = req.body;
 
-    if(!user.tittle){
+    if(!product.tittle){
     
         return res.status(400).send({status:'error',error:'Incomplete value'})
 
-    }
-    let userCreated = {
-        id: idCount++,
-        ...user
-    }
-    products.push(userCreated);
+    }else{
+        const productCreated = {
+            id: idCount = productsParse[productsParse.length - 1].id + 1,
+            ...product
+        }
     
- console.log(products);
-        res.send({status:'success',mesagge:'User created'})
+        productsParse.push(productCreated);
+        write();
+        console.log(productsParse);
+        return res.send({status:'success',product:productCreated})
+        
+
+
+    }
+   
+       
 
         })
     
@@ -55,7 +77,7 @@ router.post('/',(req,res)=>{
 
 
     router.put('/:pid', (req,res)=>{
-    const newUser = req.body;
+    const newProduct = req.body;
     const idParams = req.params.pid;
     if(!idParams){
     
@@ -63,18 +85,18 @@ router.post('/',(req,res)=>{
 
     }
     
-    const userIndex = products.findIndex(u=>u.id === parseInt(idParams))
+    const productIndex = productsParse.findIndex(u=>u.id === parseInt(idParams))
    
 
-    if(userIndex < 0){
+    if(productIndex < 0){
         return res.status(404).send({status:'error',error:'Product not found'})
     }else{
         let upGradeproduct ={
             id: parseInt(idParams),
-            ...newUser
+            ...newProduct
         }
-        products.splice(userIndex,1,upGradeproduct);
-        console.log(products);
+        productsParse.splice(productIndex,1,upGradeproduct);
+        console.log(productsParse);
         
        
         return res.send({status:'success',mesagge:'Product upgrade'})  
@@ -92,19 +114,20 @@ router.delete('/:pid', (req,res)=>{
 
     }
     
-    const userIndex = products.findIndex(u=>u.id === parseInt(idParams))
+    const productIndex = productsParse.findIndex(u=>u.id === parseInt(idParams))
    
 
-    if(userIndex < 0){
+    if(productIndex < 0){
         return res.status(404).send({status:'error',error:'Product not found'})
     }else{
         
-        products.splice(userIndex);
-        console.log(products);
+        productsParse.splice(productIndex);
+        console.log(productsParse);
         
        
         return res.send({status:'success',mesagge:'Removed product'})  
     }
 })
 
-export default router;
+
+module.exports = router;
